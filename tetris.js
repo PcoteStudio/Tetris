@@ -24,11 +24,12 @@ $(function () {
 
   // Game variables
   let grid = [];
+  let shadowGrid = [];
   let activePiece;
   let steps = 0;
 
-  function createEmptyBoard() {
-    grid = Array(NUM_CELLS_HORIZONTAL)
+  function createEmptyGrid() {
+    return Array(NUM_CELLS_HORIZONTAL)
       .fill()
       .map(() => Array(NUM_CELLS_VERTICAL).fill(CELLS.EMPTY));
   }
@@ -53,6 +54,8 @@ $(function () {
   }
 
   function addActivePiece() {
+    removeActiveShadow();
+    addActiveShadow();
     addPieceToGrid(
       activePiece.piece,
       activePiece.x,
@@ -111,6 +114,37 @@ $(function () {
     return true;
   }
 
+  function removeActiveShadow() {
+    shadowGrid = createEmptyGrid();
+  }
+
+  function addActiveShadow() {
+    if (!activePiece) return false;
+    for (let y = NUM_CELLS_VERTICAL - 1; y > activePiece.y; y--) {
+      if (
+        isSpaceOccupied(
+          activePiece.piece,
+          activePiece.x,
+          y,
+          activePiece.direction
+        )
+      )
+        continue;
+
+      doForEachPieceCell(
+        activePiece.piece,
+        activePiece.x,
+        y,
+        activePiece.direction,
+        function (x, y) {
+          shadowGrid[x][y] = activePiece.value;
+        }
+      );
+      return true;
+    }
+    return false;
+  }
+
   function isCellEmpty(x, y) {
     return grid[x][y] == CELLS.EMPTY;
   }
@@ -162,11 +196,17 @@ $(function () {
       NUM_CELLS_VERTICAL * CELL_SIZE
     );
 
-    // Redraw all pieces
+    // Redraw all pieces and shadows
     for (var i = 0; i < NUM_CELLS_HORIZONTAL; ++i) {
       for (var j = 0; j < NUM_CELLS_VERTICAL; ++j) {
-        if (grid[i][j] == CELLS.EMPTY) continue;
-        boardContext.fillStyle = CELL_COLORS[grid[i][j]];
+        if (grid[i][j] == CELLS.EMPTY) {
+          if (shadowGrid[i][j] == CELLS.EMPTY) continue;
+          boardContext.fillStyle = CELL_COLORS[shadowGrid[i][j]];
+          boardContext.globalAlpha = 0.3;
+        } else {
+          boardContext.fillStyle = CELL_COLORS[grid[i][j]];
+          boardContext.globalAlpha = 1;
+        }
         boardContext.fillRect(
           0 + i * CELL_SIZE,
           0 + j * CELL_SIZE,
@@ -193,19 +233,15 @@ $(function () {
     if (direction) if (moveActivePiece(direction)) drawBoard();
   }
 
-  createEmptyBoard();
+  grid = createEmptyGrid();
+  shadowGrid = createEmptyGrid();
   activePiece = {
     piece: getRandomPiece(),
     x: HORIZONTAL_CENTER,
     y: 0,
     direction: getRandomDirection(),
   };
-  addPieceToGrid(
-    activePiece.piece,
-    activePiece.x,
-    activePiece.y,
-    activePiece.direction
-  );
+  addActivePiece();
   document.onkeydown = keyDownHandler;
   drawBackgroundBoard();
   drawBoard();
