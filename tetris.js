@@ -15,8 +15,8 @@ $(function () {
   const bgBoardContext = bgBoard.getContext("2d");
 
   // Constants
-  const KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40 };
-  const DIRECTIONS = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
+  const KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Q: 81, W: 87, E: 69 };
+  const DIRECTIONS = { NONE: -1, UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
   const CELL_SIZE = 24;
   const NUM_CELLS_HORIZONTAL = 10;
   const NUM_CELLS_VERTICAL = 20;
@@ -79,11 +79,43 @@ $(function () {
     );
   }
 
+  function sanitizeDirection(direction) {
+    direction = ((direction + 1) % 4) - 1;
+    if (direction < 0) direction = 3;
+    return direction;
+  }
+
+  function rotateActivePiece(difference) {
+    removeActivePiece();
+    activePiece.direction = sanitizeDirection(
+      activePiece.direction + difference
+    );
+    if (
+      isSpaceOccupied(
+        activePiece.piece,
+        activePiece.x,
+        activePiece.y,
+        activePiece.direction
+      )
+    ) {
+      activePiece.direction = sanitizeDirection(
+        activePiece.direction + 4 - difference
+      );
+      addActivePiece();
+      return false;
+    } else {
+      addActivePiece();
+      return true;
+    }
+  }
+
   function moveActivePiece(direction) {
     if (!activePiece) return false;
     let targetX = activePiece.x;
     let targetY = activePiece.y;
     switch (direction) {
+      case DIRECTIONS.NONE:
+        break;
       case DIRECTIONS.RIGHT:
         targetX = activePiece.x + 1;
         break;
@@ -219,6 +251,8 @@ $(function () {
 
   function keyDownHandler(e) {
     let direction;
+    let rotation;
+    // console.log(e.keyCode);
     switch (e.keyCode) {
       case KEYS.LEFT:
         direction = DIRECTIONS.LEFT;
@@ -229,8 +263,21 @@ $(function () {
       case KEYS.DOWN:
         direction = DIRECTIONS.DOWN;
         break;
+      case KEYS.Q:
+        rotation = 3;
+        break;
+      case KEYS.W:
+        rotation = 2;
+        break;
+      case KEYS.E:
+        rotation = 1;
+        break;
     }
-    if (direction) if (moveActivePiece(direction)) drawBoard();
+    if (direction) {
+      if (moveActivePiece(direction)) drawBoard();
+    } else if (rotation) {
+      if (rotateActivePiece(rotation)) drawBoard();
+    }
   }
 
   grid = createEmptyGrid();
