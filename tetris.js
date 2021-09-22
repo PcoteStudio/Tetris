@@ -15,7 +15,16 @@ $(function () {
   const bgBoardContext = bgBoard.getContext("2d");
 
   // Constants
-  const KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Q: 81, W: 87, E: 69 };
+  const KEYS = {
+    LEFT: 37,
+    UP: 38,
+    RIGHT: 39,
+    DOWN: 40,
+    Q: 81,
+    W: 87,
+    E: 69,
+    SPACE: 32,
+  };
   const DIRECTIONS = { NONE: -1, UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
   const CELL_SIZE = 24;
   const NUM_CELLS_HORIZONTAL = 10;
@@ -53,6 +62,12 @@ $(function () {
     });
   }
 
+  function addPieceToShadowGrid(piece, x, y, direction) {
+    doForEachPieceCell(piece, x, y, direction, function (x, y) {
+      shadowGrid[x][y] = piece.value;
+    });
+  }
+
   function addActivePiece() {
     removeActiveShadow();
     addActiveShadow();
@@ -62,6 +77,24 @@ $(function () {
       activePiece.y,
       activePiece.direction
     );
+  }
+
+  function addActiveShadow() {
+    if (!activePiece) return false;
+    let y = findLowestPosition(
+      activePiece.piece,
+      activePiece.x,
+      activePiece.y,
+      activePiece.direction
+    );
+    if (!y) return false;
+    addPieceToShadowGrid(
+      activePiece.piece,
+      activePiece.x,
+      y,
+      activePiece.direction
+    );
+    return true;
   }
 
   function removePieceFromGrid(piece, x, y, direction) {
@@ -150,31 +183,13 @@ $(function () {
     shadowGrid = createEmptyGrid();
   }
 
-  function addActiveShadow() {
-    if (!activePiece) return false;
-    for (let y = NUM_CELLS_VERTICAL - 1; y > activePiece.y; y--) {
-      if (
-        isSpaceOccupied(
-          activePiece.piece,
-          activePiece.x,
-          y,
-          activePiece.direction
-        )
-      )
-        continue;
-
-      doForEachPieceCell(
-        activePiece.piece,
-        activePiece.x,
-        y,
-        activePiece.direction,
-        function (x, y) {
-          shadowGrid[x][y] = activePiece.value;
-        }
-      );
-      return true;
+  function findLowestPosition(piece, x, y, direction) {
+    let lowest = undefined;
+    for (let c_y = y; c_y < NUM_CELLS_VERTICAL; c_y++) {
+      if (!isSpaceOccupied(piece, x, c_y, direction)) lowest = c_y;
+      else return lowest;
     }
-    return false;
+    return lowest;
   }
 
   function isCellEmpty(x, y) {
@@ -194,6 +209,20 @@ $(function () {
         result = true;
     });
     return result;
+  }
+
+  function dropActivePiece() {
+    removeActivePiece();
+    let y = findLowestPosition(
+      activePiece.piece,
+      activePiece.x,
+      activePiece.y,
+      activePiece.direction
+    );
+    if (!y) return false;
+    addPieceToGrid(activePiece.piece, activePiece.x, y, activePiece.direction);
+    activePiece = undefined;
+    return true;
   }
 
   function drawBackgroundBoard() {
@@ -254,6 +283,19 @@ $(function () {
     let rotation;
     // console.log(e.keyCode);
     switch (e.keyCode) {
+      case KEYS.SPACE:
+        if (dropActivePiece()) {
+          // TODO Get next piece from queue
+          activePiece = {
+            piece: getRandomPiece(),
+            x: HORIZONTAL_CENTER,
+            y: 0,
+            direction: getRandomDirection(),
+          };
+          addActivePiece();
+          drawBoard();
+        }
+        return;
       case KEYS.LEFT:
         direction = DIRECTIONS.LEFT;
         break;
