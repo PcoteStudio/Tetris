@@ -60,6 +60,7 @@ $(function () {
     doForEachPieceCell(piece, x, y, direction, function (x, y) {
       grid[x][y] = piece.value;
     });
+    checkForTetris(y);
   }
 
   function addPieceToShadowGrid(piece, x, y, direction) {
@@ -223,6 +224,29 @@ $(function () {
     addPieceToGrid(activePiece.piece, activePiece.x, y, activePiece.direction);
     activePiece = undefined;
     return true;
+  }
+
+  function clearLine(y) {
+    if (y < 0 || y >= NUM_CELLS_VERTICAL) return false;
+    for (var x = 0; x < NUM_CELLS_HORIZONTAL; ++x) {
+      grid[x].splice(y, 1);
+      grid[x].splice(0, 0, CELLS.EMPTY);
+    }
+    return true;
+  }
+
+  function checkForTetris(posY) {
+    let initialY = Math.min(posY + 4, NUM_CELLS_VERTICAL - 1);
+    for (var y = initialY; y >= 0; --y) {
+      let cellCount = NUM_CELLS_HORIZONTAL;
+      for (var x = 0; x < NUM_CELLS_HORIZONTAL; ++x) {
+        if (grid[x][y] == CELLS.EMPTY || grid[x][y] == CELLS.DEFINITIVE) break;
+        cellCount--;
+      }
+      if (cellCount == 0) {
+        clearLine(y);
+      }
+    }
   }
 
   function drawBackgroundBoard() {
