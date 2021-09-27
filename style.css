@@ -2,21 +2,35 @@ body {
   background-color: #0d1117;
 }
 
-.board,
-.board-background {
+.board-ctn {
+  display: block;
+  float: left;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.m-board,
+.m-board-background {
   top: 0;
   left: 0;
 }
 
-.board {
+.m-board {
   z-index: 2;
 }
 
-.board-background {
+.m-board-background {
   z-index: 1;
 }
 
-.board-ctn {
+.l-board-ctn {
+  width: 96px;
+  height: 96px;
+
+  background-color: rgb(19, 19, 24);;
+}
+
+.m-board-ctn {
   position: relative;
   border-style: solid;
   border-color: #393939;
@@ -24,6 +38,12 @@ body {
   border-width: 3px;
   width: 248px;
   height: 480px;
+}
+
+.r-board-ctn {
+  width: 96px;
+  height: 360px;
+  background-color: rgb(19, 19, 24);
 }
 
 .layer {

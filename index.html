@@ -8,13 +8,36 @@
 
   <body>
     <div></div>
-    <div class="board-ctn">
-      <canvas id="board" class="layer board" width="248" height="480"></canvas>
+    <div class="l-board-ctn board-ctn">
       <canvas
-        id="board-bg"
-        class="layer board-background"
+        id="hold-board"
+        class="hold-board"
+        width="96"
+        height="96"
+      ></canvas>
+    </div>
+
+    <div class="m-board-ctn board-ctn">
+      <canvas
+        id="board"
+        class="layer m-board"
         width="248"
         height="480"
+      ></canvas>
+      <canvas
+        id="board-bg"
+        class="layer m-board-background"
+        width="248"
+        height="480"
+      ></canvas>
+    </div>
+
+    <div class="r-board-ctn board-ctn">
+      <canvas
+        id="next-board"
+        class="next-board"
+        width="96"
+        height="360"
       ></canvas>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

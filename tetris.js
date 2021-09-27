@@ -13,6 +13,10 @@ $(function () {
   const boardContext = board.getContext("2d");
   const bgBoard = document.getElementById("board-bg");
   const bgBoardContext = bgBoard.getContext("2d");
+  const nextBoard = document.getElementById("next-board");
+  const nextBoardContext = nextBoard.getContext("2d");
+  const holdBoard = document.getElementById("hold-board");
+  const holdBoardContext = holdBoard.getContext("2d");
 
   // Constants
   const KEYS = {
@@ -26,7 +30,9 @@ $(function () {
     SPACE: 32,
   };
   const DIRECTIONS = { NONE: -1, UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
+  const DEFAULT_DIRECTION = 2;
   const CELL_SIZE = 24;
+  const CELLS_PER_PIECE = 4;
   const NUM_CELLS_HORIZONTAL = 10;
   const NUM_CELLS_VERTICAL = 20;
   const HORIZONTAL_CENTER = Math.floor(NUM_CELLS_HORIZONTAL / 2.0) - 1;
@@ -34,7 +40,9 @@ $(function () {
   // Game variables
   let grid = [];
   let shadowGrid = [];
+  let nextPieces = [];
   let activePiece;
+  let holdPiece;
   let steps = 0;
 
   function createEmptyGrid() {
@@ -56,11 +64,11 @@ $(function () {
     }
   }
 
-  function addPieceToGrid(piece, x, y, direction) {
+  function addPieceToGrid(piece, x, y, direction, checkTetris) {
     doForEachPieceCell(piece, x, y, direction, function (x, y) {
       grid[x][y] = piece.value;
     });
-    checkForTetris(y);
+    if (checkTetris) checkForTetris(y);
   }
 
   function addPieceToShadowGrid(piece, x, y, direction) {
@@ -69,14 +77,15 @@ $(function () {
     });
   }
 
-  function addActivePiece() {
+  function addActivePiece(checkTetris) {
     removeActiveShadow();
     addActiveShadow();
     addPieceToGrid(
       activePiece.piece,
       activePiece.x,
       activePiece.y,
-      activePiece.direction
+      activePiece.direction,
+      checkTetris
     );
   }
 
@@ -221,7 +230,7 @@ $(function () {
       activePiece.direction
     );
     if (!y) return false;
-    addPieceToGrid(activePiece.piece, activePiece.x, y, activePiece.direction);
+    addPieceToGrid(activePiece.piece, activePiece.x, y, activePiece.direction, true);
     activePiece = undefined;
     return true;
   }
@@ -245,6 +254,7 @@ $(function () {
       }
       if (cellCount == 0) {
         clearLine(y);
+        y++;
       }
     }
   }
@@ -293,12 +303,35 @@ $(function () {
           boardContext.globalAlpha = 1;
         }
         boardContext.fillRect(
-          0 + i * CELL_SIZE,
-          0 + j * CELL_SIZE,
+          i * CELL_SIZE,
+          j * CELL_SIZE,
           CELL_SIZE,
           CELL_SIZE
         );
       }
+    }
+  }
+
+  function drawHoldBoard() {
+    // Clear the piece
+    holdBoardContext.clearRect(
+      0,
+      0,
+      CELLS_PER_PIECE * CELL_SIZE,
+      CELLS_PER_PIECE * CELL_SIZE
+    );
+    // Draw the hold piece if any
+    if (holdPiece) {
+      holdBoardContext.fillStyle = CELL_COLORS[holdPiece.piece.value];
+      doForEachPieceCell(
+        holdPiece.piece,
+        holdPiece.x,
+        holdPiece.y,
+        holdPiece.direction,
+        function (x, y) {
+          holdBoardContext.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+      );
     }
   }
 
@@ -307,6 +340,22 @@ $(function () {
     let rotation;
     // console.log(e.keyCode);
     switch (e.keyCode) {
+      case KEYS.UP:
+        let nextPiece = holdPiece;
+        removeActivePiece();
+        holdPiece = { ...activePiece, x: 0, y: 0, direction: DEFAULT_DIRECTION };
+        if (!nextPiece) {
+          // TODO Get next piece from queue
+          nextPiece = {
+            piece: getRandomPiece(),
+            direction: DEFAULT_DIRECTION,
+          };
+        }
+        activePiece = { ...nextPiece, x: HORIZONTAL_CENTER, y: 0 };
+        addActivePiece();
+        drawBoard();
+        drawHoldBoard();
+        return;
       case KEYS.SPACE:
         if (dropActivePiece()) {
           // TODO Get next piece from queue
@@ -314,7 +363,7 @@ $(function () {
             piece: getRandomPiece(),
             x: HORIZONTAL_CENTER,
             y: 0,
-            direction: getRandomDirection(),
+            direction: DEFAULT_DIRECTION,
           };
           addActivePiece();
           drawBoard();
@@ -352,10 +401,11 @@ $(function () {
     piece: getRandomPiece(),
     x: HORIZONTAL_CENTER,
     y: 0,
-    direction: getRandomDirection(),
+    direction: DEFAULT_DIRECTION,
   };
   addActivePiece();
   document.onkeydown = keyDownHandler;
   drawBackgroundBoard();
   drawBoard();
+  drawHoldBoard();
 });
